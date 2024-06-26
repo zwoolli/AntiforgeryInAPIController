@@ -1,0 +1,14 @@
+﻿@page
+@model AntiforgeryInAPIController.Pages.LoginModel
+@{
+    ViewData["Title"] = "Log In";
+}
+
+<form id="user-login" method="post">
+    <div>
+        <input asp-for="Input.UserName" placeholder="User Name" autocomplete="username" aria-label="User Name" aria-required="true" autofocus>
+    </div>
+    <div>
+        <input asp-for="Input.Password" placeholder="Password" autocomplete="current-password" aria-label="Password" aria-required="true"/>
+    </div>
+</form>

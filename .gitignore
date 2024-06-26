@@ -1,0 +1,9 @@
+bin
+obj
+.vscode
+wwwroot
+appsettings*
+package-lock.json
+src/Properties
+tests/*globalusings*
+*.sln
