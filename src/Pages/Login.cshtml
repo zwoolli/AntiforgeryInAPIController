@@ -6,9 +6,10 @@
 
 <form id="user-login" method="post">
     <div>
-        <input asp-for="Input.UserName" placeholder="User Name" autocomplete="username" aria-label="User Name" aria-required="true" autofocus>
+        <input asp-for="Input.UserName" placeholder="User Name" autofocus>
     </div>
     <div>
-        <input asp-for="Input.Password" placeholder="Password" autocomplete="current-password" aria-label="Password" aria-required="true"/>
+        <input asp-for="Input.Password" placeholder="Password"/>
     </div>
+    <button id="login-submit" type="submit">Log in</button>
 </form>
