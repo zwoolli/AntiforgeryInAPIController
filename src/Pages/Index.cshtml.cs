@@ -10,3 +10,11 @@ public class IndexModel : PageModel
     {
     }
 }
+
+// TODO: Add a form to test that doesn't need authentication
+// And a form to test that does need authentication
+
+// Also add an api endpoint that doesn't need authentication
+// And an api endpoint that does need authentication
+
+// Replicate problem!
