@@ -1,7 +1,7 @@
-using System.Diagnostics;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace AntiforgeryInAPIController.Controllers;
+namespace Antiforgery.Controllers;
 [ApiController]
 [Route("[controller]")]
 public class ApiController : ControllerBase
@@ -13,9 +13,18 @@ public class ApiController : ControllerBase
         return Ok();
     }
 
-    [HttpPost]
-    public void Post(string name)
+    [HttpPost("Authenticated")]
+    public IActionResult AuthenticatedPost(string name)
     {
-        Debug.WriteLine(name);
+        return Ok(name);
+    }
+
+// TODO Make test for these endpoints
+// Get to the point where these work then add in antiforgery stuff
+    [AllowAnonymous]
+    [HttpPost("Anonymous")]
+    public IActionResult AnonymousPost(string name)
+    {
+        return Ok(name);
     }
 }
