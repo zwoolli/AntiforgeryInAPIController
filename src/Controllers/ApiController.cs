@@ -13,17 +13,31 @@ public class ApiController : ControllerBase
         return Ok();
     }
 
-    [HttpPost("Authenticated")]
+    [HttpPost("Authenticated/{name}")]
     public IActionResult AuthenticatedPost(string name)
     {
         return Ok(name);
     }
 
-// TODO Make test for these endpoints
-// Get to the point where these work then add in antiforgery stuff
     [AllowAnonymous]
-    [HttpPost("Anonymous")]
+    [HttpPost("Anonymous/{name}")]
     public IActionResult AnonymousPost(string name)
+    {
+        return Ok(name);
+    }
+
+// TODO: Create test for this method
+    [ValidateAntiForgeryToken]
+    [HttpPost("Authenticated/Antiforgery/{name}")]
+    public IActionResult AuthenticatedAntiforgeryPost(string name)
+    {
+        return Ok(name);
+    }
+
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    [HttpPost("Anonymous/Antiforgery/{name}")]
+    public IActionResult AnonymousAntiforgeryPost(string name)
     {
         return Ok(name);
     }

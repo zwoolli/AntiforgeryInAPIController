@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Tests;
@@ -16,5 +17,57 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<Progr
         ClientOptions.AllowAutoRedirect = false;
         ClientOptions.BaseAddress = new Uri("https://localhost");
         ClientOptions.HandleCookies = true;
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.ConfigureAntiforgeryTokenResource();
+    }
+
+    /// <summary>
+    /// Configures a test authentication scheme to use when accessing a route requiring authroization
+    /// </summary>
+    /// <returns>
+    /// An <see cref="HttpClient"/> with the test scheme authorization headers
+    /// </returns>
+    public HttpClient GetAuthenticatedClient()
+    {
+        string testScheme = "TestScheme";
+
+        HttpClient client = WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureTestAuthenticationScheme(testScheme);
+        })
+        .CreateDefaultClient();
+        
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(scheme: testScheme);
+
+        return client;
+    }
+
+    /// <summary>
+    /// Gets a set of valid antiforgery tokens for the application as an asynchronous operation.
+    /// </summary>
+    /// <param name="httpClientFactory">
+    /// An optional delegate to a method to provide <see cref="HttpClient"/> to use to obtain the response.
+    /// </param>
+    /// <param name="cancellationToken">
+    /// The optional <see cref="CancellationToken"/> to use for the HTTP request to obtain the response.
+    /// </param>
+    /// <returns>
+    /// A <see cref="Task{TResult}"/> representing the asynchronous operation to get a set of valid
+    /// antiforgery (CSRF/XSRF) tokens to use for HTTP POST requests to the test server
+    /// </returns>
+    public async Task<AntiforgeryTokens> GetAntiforgeryTokensAsync(
+        Func<HttpClient>? httpClientFactory = null,
+        CancellationToken cancellationToken = default)
+    {
+        using HttpClient httpClient = httpClientFactory?.Invoke() ?? CreateDefaultClient();
+
+        AntiforgeryTokens? tokens = await httpClient.GetFromJsonAsync<AntiforgeryTokens>(
+            AntiforgeryTokenController.GetTokensUri,
+            cancellationToken);
+
+        return tokens!;
     }
 }
