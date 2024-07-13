@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.Mvc.Testing.Handlers;
 
 namespace Tests;
 
@@ -30,15 +31,17 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<Progr
     /// <returns>
     /// An <see cref="HttpClient"/> with the test scheme authorization headers
     /// </returns>
-    public HttpClient GetAuthenticatedClient()
+    public HttpClient GetAuthenticatedClient(CookieContainerHandler? cookieHandler = default)
     {
+        cookieHandler ??= new();
+
         string testScheme = "TestScheme";
 
         HttpClient client = WithWebHostBuilder(builder =>
         {
             builder.ConfigureTestAuthenticationScheme(testScheme);
         })
-        .CreateDefaultClient();
+        .CreateDefaultClient(cookieHandler);
         
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(scheme: testScheme);
 

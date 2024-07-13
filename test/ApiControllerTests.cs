@@ -94,7 +94,7 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
             _factory.Server.BaseAddress,
             new Cookie(tokens.CookieName, tokens.CookieValue));
 
-        HttpClient client =  _factory.CreateDefaultClient(cookieHandler);
+        HttpClient client = _factory.CreateDefaultClient(cookieHandler);
 
         client.DefaultRequestHeaders.Add(tokens.HeaderName, tokens.RequestToken);
         
@@ -102,6 +102,35 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
         {
             Method = HttpMethod.Post,
             RequestUri = new Uri("/api/anonymous/antiforgery/testname", UriKind.Relative)
+        };
+    
+        // Act
+        HttpResponseMessage response = await client.SendAsync(message);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);   
+    }
+
+// TODO: Need to get authentication cookies to send to server too
+    [Fact]
+    public async Task Authenticated_request_to_authenticated_antiforgery_endpoint_with_tokens_returns_ok()
+    {
+        // Assert
+        AntiforgeryTokens tokens = await _factory.GetAntiforgeryTokensAsync();
+
+        CookieContainerHandler cookieHandler = new();
+        cookieHandler.Container.Add(
+            _factory.Server.BaseAddress,
+            new Cookie(tokens.CookieName, tokens.CookieValue));
+
+        HttpClient client = _factory.GetAuthenticatedClient(cookieHandler);
+
+        client.DefaultRequestHeaders.Add(tokens.HeaderName, tokens.RequestToken);
+        
+        HttpRequestMessage message = new()
+        {
+            Method = HttpMethod.Post,
+            RequestUri = new Uri("/api/authenticated/antiforgery/testname", UriKind.Relative)
         };
     
         // Act
