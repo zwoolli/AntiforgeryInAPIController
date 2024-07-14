@@ -111,22 +111,40 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
         response.StatusCode.Should().Be(HttpStatusCode.OK);   
     }
 
-// TODO: Need to get authentication cookies to send to server too
+// TODO: Break up login part so it's clear what's happening on stack overflow post
     [Fact]
     public async Task Authenticated_request_to_authenticated_antiforgery_endpoint_with_tokens_returns_ok()
     {
         // Assert
         AntiforgeryTokens tokens = await _factory.GetAntiforgeryTokensAsync();
 
+        CancellationToken cancellationToken = new CancellationTokenSource().Token;
+
         CookieContainerHandler cookieHandler = new();
         cookieHandler.Container.Add(
             _factory.Server.BaseAddress,
             new Cookie(tokens.CookieName, tokens.CookieValue));
 
-        HttpClient client = _factory.GetAuthenticatedClient(cookieHandler);
+        // HttpClient client = _factory.GetAuthenticatedClient(cookieHandler);
+        HttpClient client = _factory.CreateDefaultClient(cookieHandler);
 
+        Uri uri = new($"{client.BaseAddress!.AbsoluteUri}login");
+
+        Dictionary<string, string> postData = new()
+        {
+            { "Input.UserName", "testname" },
+            { "Input.Password", "password" },
+            { tokens!.FormFieldName, tokens.RequestToken }
+        };
+
+        HttpContent formContent = new FormUrlEncodedContent(postData);
+
+        HttpResponseMessage loginResponse = await client.PostAsync(uri, formContent, cancellationToken);
+
+        List<string> cookies = loginResponse.Headers.GetValues("Set-Cookie").ToList();
         client.DefaultRequestHeaders.Add(tokens.HeaderName, tokens.RequestToken);
-        
+        client.DefaultRequestHeaders.Add("Cookie", cookies);
+
         HttpRequestMessage message = new()
         {
             Method = HttpMethod.Post,
