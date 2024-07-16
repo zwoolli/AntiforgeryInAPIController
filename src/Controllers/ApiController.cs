@@ -26,7 +26,6 @@ public class ApiController : ControllerBase
         return Ok(name);
     }
 
-// TODO: Create test for this method
     [ValidateAntiForgeryToken]
     [HttpPost("Authenticated/Antiforgery/{name}")]
     public IActionResult AuthenticatedAntiforgeryPost(string name)

@@ -111,37 +111,21 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
         response.StatusCode.Should().Be(HttpStatusCode.OK);   
     }
 
-// TODO: Break up login part so it's clear what's happening on stack overflow post
     [Fact]
     public async Task Authenticated_request_to_authenticated_antiforgery_endpoint_with_tokens_returns_ok()
     {
         // Assert
         AntiforgeryTokens tokens = await _factory.GetAntiforgeryTokensAsync();
 
-        CancellationToken cancellationToken = new CancellationTokenSource().Token;
-
         CookieContainerHandler cookieHandler = new();
         cookieHandler.Container.Add(
             _factory.Server.BaseAddress,
             new Cookie(tokens.CookieName, tokens.CookieValue));
 
-        // HttpClient client = _factory.GetAuthenticatedClient(cookieHandler);
-        HttpClient client = _factory.CreateDefaultClient(cookieHandler);
+        HttpClient client = _factory.GetAuthenticatedClient(cookieHandler);
 
-        Uri uri = new($"{client.BaseAddress!.AbsoluteUri}login");
+        List<string> cookies = await GetAuthenticationCookies(cookieHandler, tokens);
 
-        Dictionary<string, string> postData = new()
-        {
-            { "Input.UserName", "testname" },
-            { "Input.Password", "password" },
-            { tokens!.FormFieldName, tokens.RequestToken }
-        };
-
-        HttpContent formContent = new FormUrlEncodedContent(postData);
-
-        HttpResponseMessage loginResponse = await client.PostAsync(uri, formContent, cancellationToken);
-
-        List<string> cookies = loginResponse.Headers.GetValues("Set-Cookie").ToList();
         client.DefaultRequestHeaders.Add(tokens.HeaderName, tokens.RequestToken);
         client.DefaultRequestHeaders.Add("Cookie", cookies);
 
@@ -156,5 +140,27 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);   
+    }
+
+    public async Task<List<string>> GetAuthenticationCookies(CookieContainerHandler cookieHandler, AntiforgeryTokens tokens)
+    {
+        CancellationToken cancellationToken = new CancellationTokenSource().Token;
+
+        HttpClient client = _factory.CreateDefaultClient(cookieHandler);
+
+        Uri uri = new($"{client.BaseAddress!.AbsoluteUri}login");
+
+        Dictionary<string, string> postData = new()
+        {
+            { "Input.UserName", "testuser" },
+            { "Input.Password", "password" },
+            { tokens!.FormFieldName, tokens.RequestToken }
+        };
+
+        HttpContent formContent = new FormUrlEncodedContent(postData);
+
+        HttpResponseMessage response = await client.PostAsync(uri, formContent, cancellationToken);
+
+        return response.Headers.GetValues("Set-Cookie").ToList();
     }
 }
