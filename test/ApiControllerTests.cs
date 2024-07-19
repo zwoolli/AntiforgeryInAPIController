@@ -16,7 +16,7 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
     [Fact]
     public async Task Unauthenticated_request_to_anonymous_endpoint_returns_ok()
     {
-        // Assert
+        // Arrange
         HttpRequestMessage message = new()
         {
             Method = HttpMethod.Post,
@@ -33,7 +33,7 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
     [Fact]
     public async Task Unauthenticated_request_to_authenticated_endpoint_returns_redirect()
     {
-        // Assert
+        // Arrange
         HttpRequestMessage message = new()
         {
             Method = HttpMethod.Post,
@@ -50,7 +50,7 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
     [Fact]
     public async Task Authenticated_request_to_autheticated_endpoint_returns_ok()
     {
-        // Assert
+        // Arrange
         HttpClient client = _factory.GetAuthenticatedClient();
 
         HttpRequestMessage message = new()
@@ -69,7 +69,7 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
     [Fact]
     public async Task Unauthenticated_request_to_anonymous_antiforgery_endpoint_without_tokens_returns_bad_request()
     {
-        // Assert
+        // Arrange
         HttpRequestMessage message = new()
         {
             Method = HttpMethod.Post,
@@ -86,7 +86,7 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
     [Fact]
     public async Task Unauthenticated_request_to_anonymous_antiforgery_endpoint_with_tokens_returns_ok()
     {
-        // Assert
+        // Arrange
         AntiforgeryTokens tokens = await _factory.GetAntiforgeryTokensAsync();
 
         CookieContainerHandler cookieHandler = new();
@@ -114,7 +114,9 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
     [Fact]
     public async Task Authenticated_request_to_authenticated_antiforgery_endpoint_with_tokens_returns_ok()
     {
-        // Assert
+        // Arrange
+        List<string> cookies = await GetAuthenticationCookies();
+
         AntiforgeryTokens tokens = await _factory.GetAntiforgeryTokensAsync();
 
         CookieContainerHandler cookieHandler = new();
@@ -123,9 +125,7 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
             new Cookie(tokens.CookieName, tokens.CookieValue));
 
         HttpClient client = _factory.GetAuthenticatedClient(cookieHandler);
-
-        List<string> cookies = await GetAuthenticationCookies(cookieHandler, tokens);
-
+        
         client.DefaultRequestHeaders.Add(tokens.HeaderName, tokens.RequestToken);
         client.DefaultRequestHeaders.Add("Cookie", cookies);
 
@@ -142,9 +142,16 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
         response.StatusCode.Should().Be(HttpStatusCode.OK);   
     }
 
-    public async Task<List<string>> GetAuthenticationCookies(CookieContainerHandler cookieHandler, AntiforgeryTokens tokens)
+    public async Task<List<string>> GetAuthenticationCookies()
     {
         CancellationToken cancellationToken = new CancellationTokenSource().Token;
+
+        AntiforgeryTokens tokens = await _factory.GetAntiforgeryTokensAsync();
+
+        CookieContainerHandler cookieHandler = new();
+        cookieHandler.Container.Add(
+            _factory.Server.BaseAddress,
+            new Cookie(tokens.CookieName, tokens.CookieValue));
 
         HttpClient client = _factory.CreateDefaultClient(cookieHandler);
 
