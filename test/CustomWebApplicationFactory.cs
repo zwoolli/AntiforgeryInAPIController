@@ -63,9 +63,12 @@ public class CustomWebApplicationFactory<TProgram> : WebApplicationFactory<Progr
     /// </returns>
     public async Task<AntiforgeryTokens> GetAntiforgeryTokensAsync(
         Func<HttpClient>? httpClientFactory = null,
+        bool isAuthenticated = false,
         CancellationToken cancellationToken = default)
     {
-        using HttpClient httpClient = httpClientFactory?.Invoke() ?? CreateDefaultClient();
+        using HttpClient httpClient = isAuthenticated
+            ? GetAuthenticatedClient()
+            : httpClientFactory?.Invoke() ?? CreateDefaultClient();
 
         AntiforgeryTokens? tokens = await httpClient.GetFromJsonAsync<AntiforgeryTokens>(
             AntiforgeryTokenController.GetTokensUri,

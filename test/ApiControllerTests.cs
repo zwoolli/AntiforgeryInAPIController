@@ -115,11 +115,14 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
     public async Task Authenticated_request_to_authenticated_antiforgery_endpoint_with_tokens_returns_ok()
     {
         // Arrange
-        List<string> cookies = await GetAuthenticationCookies();
+        CookieCollection cookies = await GetAuthenticationCookies();
 
-        AntiforgeryTokens tokens = await _factory.GetAntiforgeryTokensAsync();
-
+        AntiforgeryTokens tokens = await _factory.GetAntiforgeryTokensAsync(isAuthenticated: true);
+        
         CookieContainerHandler cookieHandler = new();
+
+        cookieHandler.Container.Add( _factory.Server.BaseAddress, cookies);
+
         cookieHandler.Container.Add(
             _factory.Server.BaseAddress,
             new Cookie(tokens.CookieName, tokens.CookieValue));
@@ -127,7 +130,6 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
         HttpClient client = _factory.GetAuthenticatedClient(cookieHandler);
         
         client.DefaultRequestHeaders.Add(tokens.HeaderName, tokens.RequestToken);
-        client.DefaultRequestHeaders.Add("Cookie", cookies);
 
         HttpRequestMessage message = new()
         {
@@ -142,7 +144,7 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
         response.StatusCode.Should().Be(HttpStatusCode.OK);   
     }
 
-    public async Task<List<string>> GetAuthenticationCookies()
+    public async Task<CookieCollection> GetAuthenticationCookies()
     {
         CancellationToken cancellationToken = new CancellationTokenSource().Token;
 
@@ -166,8 +168,8 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
 
         HttpContent formContent = new FormUrlEncodedContent(postData);
 
-        HttpResponseMessage response = await client.PostAsync(uri, formContent, cancellationToken);
+        await client.PostAsync(uri, formContent, cancellationToken);
 
-        return response.Headers.GetValues("Set-Cookie").ToList();
+        return cookieHandler.Container.GetAllCookies();
     }
 }
