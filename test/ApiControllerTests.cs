@@ -115,13 +115,9 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
     public async Task Authenticated_request_to_authenticated_antiforgery_endpoint_with_tokens_returns_ok()
     {
         // Arrange
-        CookieCollection cookies = await GetAuthenticationCookies();
-
         AntiforgeryTokens tokens = await _factory.GetAntiforgeryTokensAsync(isAuthenticated: true);
         
         CookieContainerHandler cookieHandler = new();
-
-        cookieHandler.Container.Add( _factory.Server.BaseAddress, cookies);
 
         cookieHandler.Container.Add(
             _factory.Server.BaseAddress,
@@ -142,34 +138,5 @@ public class ApiControllerTests : IClassFixture<CustomWebApplicationFactory<Prog
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);   
-    }
-
-    public async Task<CookieCollection> GetAuthenticationCookies()
-    {
-        CancellationToken cancellationToken = new CancellationTokenSource().Token;
-
-        AntiforgeryTokens tokens = await _factory.GetAntiforgeryTokensAsync();
-
-        CookieContainerHandler cookieHandler = new();
-        cookieHandler.Container.Add(
-            _factory.Server.BaseAddress,
-            new Cookie(tokens.CookieName, tokens.CookieValue));
-
-        HttpClient client = _factory.CreateDefaultClient(cookieHandler);
-
-        Uri uri = new($"{client.BaseAddress!.AbsoluteUri}login");
-
-        Dictionary<string, string> postData = new()
-        {
-            { "Input.UserName", "testuser" },
-            { "Input.Password", "password" },
-            { tokens!.FormFieldName, tokens.RequestToken }
-        };
-
-        HttpContent formContent = new FormUrlEncodedContent(postData);
-
-        await client.PostAsync(uri, formContent, cancellationToken);
-
-        return cookieHandler.Container.GetAllCookies();
     }
 }
